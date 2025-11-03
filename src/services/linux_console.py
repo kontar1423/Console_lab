@@ -13,7 +13,9 @@ from src.services.workspace_manager import WorkspaceManager
 from src.services.base import OSConsoleServiceBase
 
 
-class MacOSConsoleService(OSConsoleServiceBase):
+class LinuxConsoleService(OSConsoleServiceBase):
+    """Linux implementation of console service"""
+    
     def __init__(self, logger: Logger):
         self._logger = logger
         self._workspace_manager = WorkspaceManager(logger)
@@ -116,7 +118,7 @@ class MacOSConsoleService(OSConsoleServiceBase):
             result.append(line)
         
         return result
-
+    
     def cat(
         self,
         filename: PathLike[str] | str,
@@ -139,6 +141,7 @@ class MacOSConsoleService(OSConsoleServiceBase):
         except OSError as e:
             self._logger.exception(f"Error reading {filename}: {e}")
             raise
+    
     def rm(self, path: PathLike[str] | str, recursive: bool = False) -> None:
         path = self._workspace_manager.resolve_path(path)
         
@@ -162,6 +165,7 @@ class MacOSConsoleService(OSConsoleServiceBase):
         else:
             self._logger.error(f"You entered {path} is not a directory")
             raise IsADirectoryError(path)
+    
     def cd(self, path: PathLike[str] | str) -> None:
         path = self._workspace_manager.resolve_path(path)
         if not path.exists(follow_symlinks=True):
@@ -173,6 +177,7 @@ class MacOSConsoleService(OSConsoleServiceBase):
         self._workspace_manager.set_current_path(path.resolve())
         self._logger.info(f"Changed directory to: {path}")
         return None
+    
     def mkdir(self, path: PathLike[str] | str) -> None:
         path = self._workspace_manager.resolve_path(path)
         if path.exists(follow_symlinks=True):
@@ -181,6 +186,7 @@ class MacOSConsoleService(OSConsoleServiceBase):
         path.mkdir(parents=True, exist_ok=True)
         self._logger.info(f"Created directory: {path}")
         return None
+    
     def touch(self, path: PathLike[str] | str) -> None:
         path = self._workspace_manager.resolve_path(path)
         if path.exists(follow_symlinks=True):
@@ -189,6 +195,7 @@ class MacOSConsoleService(OSConsoleServiceBase):
         path.touch()
         self._logger.info(f"Created file: {path}")
         return None
+    
     def mv(self, source: PathLike[str] | str, destination: PathLike[str] | str) -> None:
         source = self._workspace_manager.resolve_path(source)
         destination = self._workspace_manager.resolve_path(destination)
@@ -198,6 +205,7 @@ class MacOSConsoleService(OSConsoleServiceBase):
         source.rename(destination)
         self._logger.info(f"Moved file: {source} to {destination}")
         return None
+    
     def cp(self, source: PathLike[str] | str, destination: PathLike[str] | str, recursive: bool = False) -> None:
         source = self._workspace_manager.resolve_path(source)
         destination = Path(destination)
@@ -225,3 +233,4 @@ class MacOSConsoleService(OSConsoleServiceBase):
         else:
             raise ValueError(f"Unknown source type: {source}")
         return None
+

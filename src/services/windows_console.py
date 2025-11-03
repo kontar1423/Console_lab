@@ -13,10 +13,26 @@ from src.services.workspace_manager import WorkspaceManager
 from src.services.base import OSConsoleServiceBase
 
 
-class MacOSConsoleService(OSConsoleServiceBase):
+class WindowsConsoleService(OSConsoleServiceBase):
+    """Windows implementation of console service"""
+    
+    # Запрещенные символы в именах файлов Windows
+    INVALID_FILENAME_CHARS = set('<>:"|?*\\')
+    
     def __init__(self, logger: Logger):
         self._logger = logger
         self._workspace_manager = WorkspaceManager(logger)
+    
+    def _validate_filename(self, path: Path) -> None:
+        """Проверка имени файла на запрещенные символы Windows"""
+        filename = path.name
+        invalid_chars = [char for char in filename if char in self.INVALID_FILENAME_CHARS]
+        
+        if invalid_chars:
+            invalid_chars_str = ', '.join(invalid_chars)
+            error_msg = f"Invalid filename: '{filename}' contains forbidden characters: {invalid_chars_str}"
+            self._logger.error(error_msg)
+            raise ValueError(error_msg)
     
     def _format_permissions(self, file_stat: os.stat_result) -> str:
         """Форматирует права доступа в стиле ls -l"""
@@ -64,11 +80,11 @@ class MacOSConsoleService(OSConsoleServiceBase):
                 nlinks = file_stat.st_nlink
                 try:
                     owner = entry.owner()
-                except (KeyError, OSError):
+                except (KeyError, OSError, NotImplementedError):
                     owner = str(file_stat.st_uid)
                 try:
                     group = entry.group()
-                except (KeyError, OSError):
+                except (KeyError, OSError, NotImplementedError):
                     group = str(file_stat.st_gid)
                 size = file_stat.st_size
                 mtime = datetime.fromtimestamp(file_stat.st_mtime)
@@ -116,7 +132,7 @@ class MacOSConsoleService(OSConsoleServiceBase):
             result.append(line)
         
         return result
-
+    
     def cat(
         self,
         filename: PathLike[str] | str,
@@ -139,14 +155,18 @@ class MacOSConsoleService(OSConsoleServiceBase):
         except OSError as e:
             self._logger.exception(f"Error reading {filename}: {e}")
             raise
+    
     def rm(self, path: PathLike[str] | str, recursive: bool = False) -> None:
         path = self._workspace_manager.resolve_path(path)
         
         # Запрет удаления корневого каталога
         path_resolved = path.resolve()
-        if path_resolved == Path('/'):
-            self._logger.error("Cannot remove root directory '/'")
-            raise PermissionError("Cannot remove root directory '/'")
+        
+        # Проверка на корневой каталог (для Windows: C:\, D:\ и т.д.)
+        if path_resolved.is_absolute() and len(path_resolved.parts) == 1:
+            # Это корневой каталог диска (C:\ или /)
+            self._logger.error(f"Cannot remove root directory '{path_resolved}'")
+            raise PermissionError(f"Cannot remove root directory '{path_resolved}'")
         
         if not path.exists(follow_symlinks=True):
             self._logger.error(f"Folder not found: {path}")
@@ -162,6 +182,7 @@ class MacOSConsoleService(OSConsoleServiceBase):
         else:
             self._logger.error(f"You entered {path} is not a directory")
             raise IsADirectoryError(path)
+    
     def cd(self, path: PathLike[str] | str) -> None:
         path = self._workspace_manager.resolve_path(path)
         if not path.exists(follow_symlinks=True):
@@ -173,31 +194,38 @@ class MacOSConsoleService(OSConsoleServiceBase):
         self._workspace_manager.set_current_path(path.resolve())
         self._logger.info(f"Changed directory to: {path}")
         return None
+    
     def mkdir(self, path: PathLike[str] | str) -> None:
         path = self._workspace_manager.resolve_path(path)
+        self._validate_filename(path)  # Проверка имени директории
         if path.exists(follow_symlinks=True):
             self._logger.error(f"Folder already exists: {path}")
             raise FileExistsError(path)
         path.mkdir(parents=True, exist_ok=True)
         self._logger.info(f"Created directory: {path}")
         return None
+    
     def touch(self, path: PathLike[str] | str) -> None:
         path = self._workspace_manager.resolve_path(path)
+        self._validate_filename(path)  # Проверка имени файла
         if path.exists(follow_symlinks=True):
             self._logger.error(f"File already exists: {path}")
             raise FileExistsError(path)
         path.touch()
         self._logger.info(f"Created file: {path}")
         return None
+    
     def mv(self, source: PathLike[str] | str, destination: PathLike[str] | str) -> None:
         source = self._workspace_manager.resolve_path(source)
         destination = self._workspace_manager.resolve_path(destination)
         if not source.exists(follow_symlinks=True):
             self._logger.error(f"File not found: {source}")
             raise FileNotFoundError(source)
+        self._validate_filename(destination)  # Проверка целевого имени
         source.rename(destination)
         self._logger.info(f"Moved file: {source} to {destination}")
         return None
+    
     def cp(self, source: PathLike[str] | str, destination: PathLike[str] | str, recursive: bool = False) -> None:
         source = self._workspace_manager.resolve_path(source)
         destination = Path(destination)
@@ -209,6 +237,8 @@ class MacOSConsoleService(OSConsoleServiceBase):
         # Если destination - директория, добавить имя файла/папки
         if destination.exists() and destination.is_dir():
             destination = destination / source.name
+        
+        self._validate_filename(destination)  # Проверка целевого имени
         
         # Копировать файл
         if source.is_file():
@@ -225,3 +255,4 @@ class MacOSConsoleService(OSConsoleServiceBase):
         else:
             raise ValueError(f"Unknown source type: {source}")
         return None
+
