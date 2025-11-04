@@ -182,5 +182,63 @@ def cp(
         typer.echo(e)
     except OSError as e:
         typer.echo(e)
+
+@app.command()
+def zip(
+    ctx: Context,
+    source: Path = typer.Argument(..., exists=False, help="File or directory to zip"),
+    destination: Path = typer.Argument(..., exists=False, help="Archive file path"),
+) -> None:
+    try:
+        container: Container = get_container(ctx)
+        container.console_service.zip(source, destination)
+        typer.echo(f"Created archive: {destination}")
+    except OSError as e:
+        typer.echo(e)
+
+@app.command()
+def unzip(
+    ctx: Context,
+    archive: Path = typer.Argument(..., exists=False, help="Archive file to extract"),
+    destination: Path = typer.Option(None, "--destination", "-d", help="Destination directory"),
+) -> None:
+    try:
+        container: Container = get_container(ctx)
+        container.console_service.unzip(archive, destination)
+        dest_path = destination if destination else archive.parent
+        typer.echo(f"Extracted to: {dest_path}")
+    except OSError as e:
+        typer.echo(e)
+    except ValueError as e:
+        typer.echo(e)
+
+@app.command()
+def tar(
+    ctx: Context,
+    source: Path = typer.Argument(..., exists=False, help="File or directory to archive"),
+    destination: Path = typer.Argument(..., exists=False, help="Archive file path"),
+    compress: bool = typer.Option(False, "--compress", "-z", help="Compress with gzip"),
+) -> None:
+    try:
+        container: Container = get_container(ctx)
+        container.console_service.tar(source, destination, compress=compress)
+        typer.echo(f"Created archive: {destination}")
+    except OSError as e:
+        typer.echo(e)
+
+@app.command()
+def untar(
+    ctx: Context,
+    archive: Path = typer.Argument(..., exists=False, help="Archive file to extract"),
+    destination: Path = typer.Option(None, "--destination", "-d", help="Destination directory"),
+) -> None:
+    try:
+        container: Container = get_container(ctx)
+        container.console_service.untar(archive, destination)
+        dest_path = destination if destination else archive.parent
+        typer.echo(f"Extracted to: {dest_path}")
+    except OSError as e:
+        typer.echo(e)
+
 if __name__ == "__main__":
     app()

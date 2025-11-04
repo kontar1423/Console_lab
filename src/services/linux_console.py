@@ -2,6 +2,8 @@ from logging import Logger
 import shutil
 import os
 import stat
+import zipfile
+import tarfile
 from datetime import datetime
 from os import PathLike, remove
 from pathlib import Path
@@ -222,4 +224,83 @@ class LinuxConsoleService(OSConsoleServiceBase):
         else:
             raise ValueError(f"Unknown source type: {source}")
         return None
+    
+    def zip(self, source: PathLike[str] | str, destination: PathLike[str] | str) -> None:
+        source = self._workspace_manager.resolve_path(source)
+        destination = self._workspace_manager.resolve_path(destination)
+        
+        if not source.exists():
+            self._logger.error(f"Source not found: {source}")
+            raise FileNotFoundError(f"Source not found: {source}")
+        
+        source_path = Path(source)
+        
+        with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            if source_path.is_file():
+                zipf.write(source_path, source_path.name)
+                self._logger.info(f"Zipped file: {source} -> {destination}")
+            elif source_path.is_dir():
+                for file_path in source_path.rglob('*'):
+                    if file_path.is_file():
+                        arcname = file_path.relative_to(source_path)
+                        zipf.write(file_path, arcname)
+                self._logger.info(f"Zipped directory: {source} -> {destination}")
+            else:
+                raise ValueError(f"Unknown source type: {source}")
+    
+    def unzip(self, archive: PathLike[str] | str, destination: PathLike[str] | str | None = None) -> None:
+        archive = self._workspace_manager.resolve_path(archive)
+        
+        if not archive.exists():
+            self._logger.error(f"Archive not found: {archive}")
+            raise FileNotFoundError(f"Archive not found: {archive}")
+        
+        if not zipfile.is_zipfile(archive):
+            raise ValueError(f"Not a valid zip file: {archive}")
+        
+        if destination is None:
+            destination = archive.parent
+        else:
+            destination = self._workspace_manager.resolve_path(destination)
+        
+        destination_path = Path(destination)
+        destination_path.mkdir(parents=True, exist_ok=True)
+        
+        with zipfile.ZipFile(archive, 'r') as zipf:
+            zipf.extractall(destination_path)
+            self._logger.info(f"Extracted {archive} to {destination_path}")
+    
+    def tar(self, source: PathLike[str] | str, destination: PathLike[str] | str, compress: bool = False) -> None:
+        source = self._workspace_manager.resolve_path(source)
+        destination = self._workspace_manager.resolve_path(destination)
+        
+        if not source.exists():
+            self._logger.error(f"Source not found: {source}")
+            raise FileNotFoundError(f"Source not found: {source}")
+        
+        source_path = Path(source)
+        mode = 'w:gz' if compress else 'w'
+        
+        with tarfile.open(destination, mode) as tarf:
+            tarf.add(source_path, arcname=source_path.name, recursive=True)
+            self._logger.info(f"Created tar: {source} -> {destination}")
+    
+    def untar(self, archive: PathLike[str] | str, destination: PathLike[str] | str | None = None) -> None:
+        archive = self._workspace_manager.resolve_path(archive)
+        
+        if not archive.exists():
+            self._logger.error(f"Archive not found: {archive}")
+            raise FileNotFoundError(f"Archive not found: {archive}")
+        
+        if destination is None:
+            destination = archive.parent
+        else:
+            destination = self._workspace_manager.resolve_path(destination)
+        
+        destination_path = Path(destination)
+        destination_path.mkdir(parents=True, exist_ok=True)
+        
+        with tarfile.open(archive, 'r:*') as tarf:
+            tarf.extractall(destination_path)
+            self._logger.info(f"Extracted {archive} to {destination_path}")
 
