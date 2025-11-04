@@ -183,17 +183,18 @@ class WindowsConsoleService(OSConsoleServiceBase):
             self._logger.error(f"You entered {path} is not a directory")
             raise IsADirectoryError(path)
     
-    def cd(self, path: PathLike[str] | str) -> None:
-        path = self._workspace_manager.resolve_path(path)
-        if not path.exists(follow_symlinks=True):
-            self._logger.error(f"Folder not found: {path}")
-            raise FileNotFoundError(path)
-        if not path.is_dir(follow_symlinks=True):
-            self._logger.error(f"You entered {path} is not a directory")
-            raise NotADirectoryError(path)
-        self._workspace_manager.set_current_path(path.resolve())
-        self._logger.info(f"Changed directory to: {path}")
-        return None
+    def cd(self, path: PathLike[str] | str) -> Path:
+        resolved_path = self._workspace_manager.resolve_path(path)
+        if not resolved_path.exists(follow_symlinks=True):
+            self._logger.error(f"Folder not found: {resolved_path}")
+            raise FileNotFoundError(resolved_path)
+        if not resolved_path.is_dir(follow_symlinks=True):
+            self._logger.error(f"You entered {resolved_path} is not a directory")
+            raise NotADirectoryError(resolved_path)
+        resolved_path = resolved_path.resolve()
+        self._workspace_manager.set_current_path(resolved_path)
+        self._logger.info(f"Changed directory to: {resolved_path}")
+        return resolved_path
     
     def mkdir(self, path: PathLike[str] | str) -> None:
         path = self._workspace_manager.resolve_path(path)

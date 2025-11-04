@@ -128,8 +128,8 @@ def cd(
 ) -> None:
     try:
         container: Container = get_container(ctx)
-        container.console_service.cd(path)
-        typer.echo(f"Changed directory to: {path}")
+        resolved_path = container.console_service.cd(path)
+        typer.echo(f"Changed directory to: {resolved_path}")
     except OSError as e:
         typer.echo(e)
 

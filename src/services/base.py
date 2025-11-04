@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from os import PathLike
+from pathlib import Path
 from typing import Literal
 
 from src.enums.file_mode import FileReadMode
@@ -21,7 +22,7 @@ class OSConsoleServiceBase(ABC):
     def rm(self, path: PathLike[str] | str, recursive: bool = False) -> None: ...
 
     @abstractmethod
-    def cd(self, path: PathLike[str] | str) -> None: ...
+    def cd(self, path: PathLike[str] | str) -> Path: ...
     
     @abstractmethod
     def mkdir(self, path: PathLike[str] | str) -> None: ...
