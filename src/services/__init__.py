@@ -8,25 +8,15 @@ from src.services.windows_console import WindowsConsoleService
 
 
 def create_console_service(logger: Logger) -> OSConsoleServiceBase:
-    """
-    Factory function to create the appropriate console service based on OS.
-    
-    Args:
-        logger: Logger instance
-        
-    Returns:
-        OSConsoleServiceBase: Platform-specific console service implementation
-    """
     platform = sys.platform
     
-    if platform == "darwin":  # macOS
+    if platform == "darwin":
         return MacOSConsoleService(logger=logger)
-    elif platform.startswith("linux"):  # Linux
+    elif platform.startswith("linux"):
         return LinuxConsoleService(logger=logger)
-    elif platform == "win32" or platform == "cygwin":  # Windows
+    elif platform == "win32" or platform == "cygwin":
         return WindowsConsoleService(logger=logger)
     else:
-        # Fallback to Linux for other Unix-like systems
         logger.warning(f"Unknown platform {platform}, using LinuxConsoleService")
         return LinuxConsoleService(logger=logger)
 

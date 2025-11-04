@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-"""
-Entry point wrapper for console-app command.
-This ensures the src module is found correctly.
-"""
 import sys
 from pathlib import Path
 

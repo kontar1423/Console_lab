@@ -1,11 +1,9 @@
-# src/services/workspace_manager.py
 import json
 from pathlib import Path
 from logging import Logger
 
 
 class WorkspaceManager:
-    """Управление рабочим пространством между сессиями"""
     
     def __init__(self, logger: Logger, state_file: Path | None = None):
         self._logger = logger
@@ -13,7 +11,6 @@ class WorkspaceManager:
         self._load_state()
     
     def _load_state(self):
-        """Загрузить состояние из файла"""
         if self.state_file.exists():
             try:
                 with open(self.state_file, 'r') as f:
@@ -26,7 +23,6 @@ class WorkspaceManager:
             self.current_path = Path.cwd()
     
     def _save_state(self):
-        """Сохранить состояние в файл"""
         try:
             with open(self.state_file, 'w') as f:
                 json.dump({
@@ -36,16 +32,13 @@ class WorkspaceManager:
             self._logger.error(f"Failed to save state: {e}")
     
     def set_current_path(self, path: Path):
-        """Установить текущую директорию"""
         self.current_path = path
         self._save_state()
     
     def get_current_path(self) -> Path:
-        """Получить текущую директорию"""
         return self.current_path
     
     def resolve_path(self, user_input: str) -> Path:
-        """Разрешить путь относительно текущей директории"""
         input_path = Path(user_input)
         if input_path.is_absolute():
             return input_path

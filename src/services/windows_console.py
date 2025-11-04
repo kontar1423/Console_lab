@@ -3,7 +3,7 @@ import shutil
 import os
 import stat
 from datetime import datetime
-from os import PathLike, remove, removedirs
+from os import PathLike, remove
 from pathlib import Path
 from typing import Literal
 
@@ -14,9 +14,7 @@ from src.services.base import OSConsoleServiceBase
 
 
 class WindowsConsoleService(OSConsoleServiceBase):
-    """Windows implementation of console service"""
     
-    # Запрещенные символы в именах файлов Windows
     INVALID_FILENAME_CHARS = set('<>:"|?*\\')
     
     def __init__(self, logger: Logger):
@@ -24,7 +22,6 @@ class WindowsConsoleService(OSConsoleServiceBase):
         self._workspace_manager = WorkspaceManager(logger)
     
     def _validate_filename(self, path: Path) -> None:
-        """Проверка имени файла на запрещенные символы Windows"""
         filename = path.name
         invalid_chars = [char for char in filename if char in self.INVALID_FILENAME_CHARS]
         
@@ -35,7 +32,6 @@ class WindowsConsoleService(OSConsoleServiceBase):
             raise ValueError(error_msg)
     
     def _format_permissions(self, file_stat: os.stat_result) -> str:
-        """Форматирует права доступа в стиле ls -l"""
         mode = file_stat.st_mode
         perms = []
         perms.append('d' if stat.S_ISDIR(mode) else '-')
@@ -67,11 +63,9 @@ class WindowsConsoleService(OSConsoleServiceBase):
             return [entry.name + "\n" for entry in path.iterdir()]
     
     def _format_long_lines(self, entries: list[Path]) -> list[str]:
-        """Форматирует список файлов в long формате с динамическим выравниванием"""
         if not entries:
             return []
         
-        # Собираем информацию о файлах
         file_info = []
         for entry in entries:
             try:
@@ -119,15 +113,12 @@ class WindowsConsoleService(OSConsoleServiceBase):
                     'name': entry.name
                 })
         
-        # Определяем максимальные ширины
         max_owner_width = max(len(info['owner']) for info in file_info)
         max_links_width = max(len(str(info['nlinks'])) for info in file_info)
         max_size_width = max(len(str(info['size'])) for info in file_info)
         
-        # Форматируем строки
         result = []
         for info in file_info:
-            # Формат: permissions links owner group(2 пробела)size date name
             line = f"{info['permissions']} {info['nlinks']:{max_links_width}d} {info['owner']:<{max_owner_width}} {info['group']}  {info['size']:>{max_size_width}} {info['date']} {info['name']}"
             result.append(line)
         
@@ -158,13 +149,9 @@ class WindowsConsoleService(OSConsoleServiceBase):
     
     def rm(self, path: PathLike[str] | str, recursive: bool = False) -> None:
         path = self._workspace_manager.resolve_path(path)
-        
-        # Запрет удаления корневого каталога
         path_resolved = path.resolve()
         
-        # Проверка на корневой каталог (для Windows: C:\, D:\ и т.д.)
         if path_resolved.is_absolute() and len(path_resolved.parts) == 1:
-            # Это корневой каталог диска (C:\ или /)
             self._logger.error(f"Cannot remove root directory '{path_resolved}'")
             raise PermissionError(f"Cannot remove root directory '{path_resolved}'")
         
@@ -198,7 +185,7 @@ class WindowsConsoleService(OSConsoleServiceBase):
     
     def mkdir(self, path: PathLike[str] | str) -> None:
         path = self._workspace_manager.resolve_path(path)
-        self._validate_filename(path)  # Проверка имени директории
+        self._validate_filename(path)
         if path.exists(follow_symlinks=True):
             self._logger.error(f"Folder already exists: {path}")
             raise FileExistsError(path)
@@ -208,7 +195,7 @@ class WindowsConsoleService(OSConsoleServiceBase):
     
     def touch(self, path: PathLike[str] | str) -> None:
         path = self._workspace_manager.resolve_path(path)
-        self._validate_filename(path)  # Проверка имени файла
+        self._validate_filename(path)
         if path.exists(follow_symlinks=True):
             self._logger.error(f"File already exists: {path}")
             raise FileExistsError(path)
@@ -222,7 +209,7 @@ class WindowsConsoleService(OSConsoleServiceBase):
         if not source.exists(follow_symlinks=True):
             self._logger.error(f"File not found: {source}")
             raise FileNotFoundError(source)
-        self._validate_filename(destination)  # Проверка целевого имени
+        self._validate_filename(destination)
         source.rename(destination)
         self._logger.info(f"Moved file: {source} to {destination}")
         return None
@@ -235,17 +222,14 @@ class WindowsConsoleService(OSConsoleServiceBase):
             self._logger.error(f"Source not found: {source}")
             raise FileNotFoundError(f"Source not found: {source}")
         
-        # Если destination - директория, добавить имя файла/папки
         if destination.exists() and destination.is_dir():
             destination = destination / source.name
         
-        self._validate_filename(destination)  # Проверка целевого имени
+        self._validate_filename(destination)
         
-        # Копировать файл
         if source.is_file():
             shutil.copy2(source, destination)
             self._logger.info(f"Copied file: {source} -> {destination}")
-        # Копировать директорию
         elif source.is_dir():
             if recursive:
                 shutil.copytree(source, destination, dirs_exist_ok=True)

@@ -21,7 +21,7 @@ LOGGING_CONFIG = {
             "formatter": "standard",
             "mode": "a",
             "filename": "app.log",
-            "maxBytes": 5 * 1024 * 1024,  # 5 MB before rotating
+            "maxBytes": 5 * 1024 * 1024,
             "backupCount": 5,
             "level": "DEBUG",
         },

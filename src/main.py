@@ -41,12 +41,6 @@ def ls(
     ),
     mode: bool = typer.Option(False, "--long", "-l", help="List in long format"),
 ) -> None:
-    """
-    List all files in a directory.
-    :param ctx:   typer context object for imitating di container
-    :param path:  path to directory to list
-    :return: content of directory
-    """
     try:
         container: Container = get_container(ctx)
         content = container.console_service.ls(path, list_mode=ListMode.long if mode else ListMode.short)
@@ -67,13 +61,6 @@ def cat(
     ),
     mode: bool = typer.Option(False, "--bytes", "-b", help="Read as bytes"),
 ):
-    """
-    Cat a file
-    :param ctx: typer context object for imitating di container
-    :param filename: Filename to cat
-    :param mode: Mode to read the file in
-    :return:
-    """
     try:
         container: Container = get_container(ctx)
         mode = FileReadMode.bytes if mode else FileReadMode.string
@@ -98,13 +85,11 @@ def rm(
     force: bool = typer.Option(False, "--force", "-f", help="Force removal without confirmation"),
 ) -> None:
     try:
-        # Запрет удаления критичных путей
         path_str = str(path)
         if path_str == '/' or path_str == '..' or path_str.endswith('/..') or path_str.endswith('\\..'):
             typer.echo("❌ Error: Cannot remove root directory '/' or parent directory '..'")
             return
         
-        # Запросить подтверждение для рекурсивного удаления
         if recursive and not force:
             confirmation = typer.confirm(f"Remove '{path}' and all its contents?")
             if not confirmation:
