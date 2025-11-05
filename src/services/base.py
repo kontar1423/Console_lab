@@ -49,9 +49,7 @@ class OSConsoleServiceBase(ABC):
     def untar(self, archive: PathLike[str] | str, destination: PathLike[str] | str | None = None) -> None: ...
 
     def get_history(self) -> list[dict]:
-        """Get command history. Override if needed."""
         return []
 
     def undo_last(self) -> str:
-        """Undo last operation. Override if needed."""
         return "Undo not implemented"
