@@ -1,20 +1,20 @@
 # Console App
 
-Минималистичная утилита для работы с файлами и архивами.
+Utility for working with files
 
-## Установка
+## Install
 
 ```bash
 uv sync
 ```
 
-## Запуск
+## Run
 
 ```bash
-uv run app --help
+uv run app <command> [arguments]
 ```
 
-## Основные команды
+## Main commands
 
 - ls [-l] `path`
 - cat [-b] `file`
@@ -31,7 +31,7 @@ uv run app --help
 - history [--limit N]
 - undo
 
-## Примеры
+## Examples
 
 ```bash
 uv run app ls -l .
@@ -40,7 +40,34 @@ uv run app rm --recursive backup/
 uv run app undo
 ```
 
-## Примечания
+## Steps of programm processing
 
-- История команд: ~/.history
-- Бэкапы для undo: ~/.trash
+```bash
+console_app.py (app())
+    ↓
+src/main.py (main callback)
+    ↓
+create_console_service() → MacOSConsoleService.__init__()
+    ↓
+Container is creating
+    ↓
+User: ls /path --long
+    ↓
+src/main.py (ls command)
+    ↓
+container.console_service.ls()
+    ↓
+MacOSConsoleService.ls()
+    ↓
+_workspace_manager.resolve_path()
+    ↓
+Checking and formating
+    ↓
+Return result -> output
+
+```
+
+## Also
+
+- History of commands: ~/.history
+- Backups for undo: ~/.trash
