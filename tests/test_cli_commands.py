@@ -10,10 +10,6 @@ from src.main import app
 class TestMainCommandsSimplified:
     """Тесты для основных команд CLI используя интеграционные тесты."""
 
-    @pytest.fixture
-    def runner(self):
-        return CliRunner()
-
     def test_ls_command_integration(self, runner, tmp_path):
         test_dir = tmp_path / "testdir"
         test_dir.mkdir()

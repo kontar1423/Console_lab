@@ -1,8 +1,9 @@
 """Фикстуры для тестов. Позволяет не писать всё это руками в каждом тесте."""
 import logging
 from pathlib import Path
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 import pytest
+from typer.testing import CliRunner
 
 
 @pytest.fixture
@@ -36,3 +37,11 @@ def temp_backup_dir(tmp_path):
     backup_dir.mkdir(exist_ok=True)
     return backup_dir
 
+@pytest.fixture(autouse=True)
+def mock_logging():
+    with patch('src.main.logging.config.dictConfig'):
+        yield
+
+@pytest.fixture
+def runner():
+    return CliRunner()

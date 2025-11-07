@@ -10,11 +10,6 @@ from src.main import app
 class TestMainCommandsSimplified:
     """Simplified test suite for main CLI commands using integration testing."""
 
-    @pytest.fixture
-    def runner(self):
-        """Fixture that provides a CliRunner."""
-        return CliRunner()
-
     def test_ls_command_integration(self, runner, tmp_path):
         """Test ls command with actual directory."""
         test_dir = tmp_path / "testdir"
