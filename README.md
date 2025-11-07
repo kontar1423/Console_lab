@@ -67,6 +67,16 @@ Return result -> output
 
 ```
 
+## Testing
+
+```bash
+# Install test dependencies
+uv sync --extra test
+
+# Run all tests
+uv run pytest
+```
+
 ## Also
 
 - History of commands: ~/.history
