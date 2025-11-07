@@ -42,7 +42,7 @@ uv run app undo
 
 ## Steps of programm processing
 
-```bash
+```text
 console_app.py (app())
     ↓
 src/main.py (main callback)
@@ -64,7 +64,43 @@ _workspace_manager.resolve_path()
 Checking and formating
     ↓
 Return result -> output
+```
 
+## Project Structure
+
+```text
+Console-App-Sample/
+├── console_app.py              # Entry point
+├── pyproject.toml              # Project configuration
+├── pytest.ini                  # Pytest configuration
+├── uv.lock                     # Dependency lock file
+│
+├── src/                        # Source code
+│   ├── main.py                 # CLI commands (Typer app)
+│   ├── common/                 # Common utilities
+│   │   └── config.py           # Logging configuration
+│   ├── dependencies/           # Dependency injection
+│   │   └── container.py        # DI container
+│   ├── enums/                  # Enumerations
+│   │   ├── file_mode.py        # File read modes
+│   │   └── list_mode.py        # List display modes
+│   └── services/               # Business logic services
+│       ├── base.py             # Base console service interface
+│       ├── workspace_manager.py # Current directory management
+│       ├── history_manager.py  # Command history
+│       ├── undo_manager.py     # Undo operations
+│       ├── macos_console.py    # macOS implementation
+│       ├── linux_console.py    # Linux implementation
+│       └── windows_console.py  # Windows implementation
+│
+└── tests/                      # Test suite
+    ├── conftest.py             # Pytest fixtures
+    ├── test_cli_commands.py    # CLI integration tests
+    ├── test_container.py       # DI container tests
+    ├── test_workspace_manager.py
+    ├── test_history_manager.py
+    ├── test_undo_manager.py
+    └── test_macos_console_service.py
 ```
 
 ## Testing
